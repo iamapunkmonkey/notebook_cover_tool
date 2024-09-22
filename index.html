@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Processor</title>
+    <title>Image Processor with Presets</title>
     <style>
         body {
             display: flex;
@@ -19,19 +19,47 @@
             padding: 20px;
             text-align: center;
             cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
         }
         canvas {
             margin-top: 20px;
             border: 1px solid #000;
-            max-width: 95%; /* Increase max-width for larger preview */
-            max-height: 85vh; /* Increase max-height for larger preview */
+            max-width: 95%;
+            max-height: 85vh;
+        }
+        input, select {
+            margin: 5px 0;
         }
     </style>
 </head>
 <body>
     <div id="drop-zone">Drag and drop an image here</div>
+    
+    <div class="controls">
+        <label for="preset-select">Select Preset:</label>
+        <select id="preset-select">
+            <option value="medium">Medium</option>
+            <option value="small">Small</option>
+        </select>
+        
+        <label>Image Width (mm): <input type="number" id="image-width" value="133"></label>
+        <label>Image Height (mm): <input type="number" id="image-height" value="193.76"></label>
+        <label>Number of Squares: <input type="number" id="num-squares" value="21"></label>
+        <label>Square Size (mm): <input type="number" id="square-size" value="4.86"></label>
+        <label>Spacing Between Squares (mm): <input type="number" id="square-spacing" value="3.72"></label>
+        <label>Top Distance of First Square (mm): <input type="number" id="top-distance" value="8.46"></label>
+        <label>Rounded Corner Radius (mm): <input type="number" id="corner-radius" value="0"></label>
+    </div>
+
     <canvas id="preview-canvas"></canvas>
     <button id="download" style="display:none;">Download Image</button>
+    
     <script src="script.js"></script>
 </body>
 </html>

@@ -5,9 +5,47 @@ document.getElementById('drop-zone').addEventListener('click', () => {
 document.getElementById('drop-zone').addEventListener('dragover', handleDragOver);
 document.getElementById('drop-zone').addEventListener('drop', handleDrop);
 document.getElementById('download').addEventListener('click', downloadImage);
+document.getElementById('preset-select').addEventListener('change', loadPreset);
 
 let originalFileName = '';
 let fullCanvas;
+
+// Preset configurations
+const presets = {
+    medium: {
+        width: 133,
+        height: 193.76,
+        numSquares: 21,
+        squareSize: 4.86,
+        spacing: 3.72,
+        topDistance: 8.46,
+        cornerRadius: 0 // Rounded corner for medium is 0
+    },
+    small: {
+        width: 106.11,
+        height: 146,
+        numSquares: 16,
+        squareSize: 4.11,
+        spacing: 4.349333333,
+        topDistance: 6.46,
+        cornerRadius: 6 // Rounded corner for small is 6 mm
+    }
+};
+
+// Load the selected preset
+function loadPreset() {
+    const selectedPreset = document.getElementById('preset-select').value;
+    const preset = presets[selectedPreset];
+
+    // Update the input fields with the selected preset values
+    document.getElementById('image-width').value = preset.width;
+    document.getElementById('image-height').value = preset.height;
+    document.getElementById('num-squares').value = preset.numSquares;
+    document.getElementById('square-size').value = preset.squareSize;
+    document.getElementById('square-spacing').value = preset.spacing;
+    document.getElementById('top-distance').value = preset.topDistance;
+    document.getElementById('corner-radius').value = preset.cornerRadius;
+}
 
 function handleDragOver(event) {
     event.preventDefault();
@@ -38,15 +76,25 @@ function processFile(file) {
 }
 
 function processImage(img) {
-    // Define the output size in millimeters
-    const outputWidthMM = 133; // updated width
-    const outputHeightMM = 193.76; // updated height
+    // Get the values from the input fields
+    const outputWidthMM = parseFloat(document.getElementById('image-width').value);
+    const outputHeightMM = parseFloat(document.getElementById('image-height').value);
+    const numSquares = parseInt(document.getElementById('num-squares').value, 10);
+    const squareSizeMM = parseFloat(document.getElementById('square-size').value);
+    const squareSpacingMM = parseFloat(document.getElementById('square-spacing').value);
+    const topDistanceMM = parseFloat(document.getElementById('top-distance').value);
+    const cornerRadiusMM = parseFloat(document.getElementById('corner-radius').value);
 
     // Convert the size from millimeters to pixels at 300 DPI
     const dpi = 300;
-    const mmToInch = 0.0393701;
-    const outputWidthPx = Math.round(outputWidthMM * mmToInch * dpi);
-    const outputHeightPx = Math.round(outputHeightMM * mmToInch * dpi);
+    const mmToPx = dpi / 25.4; // Convert millimeters directly to pixels
+
+    const outputWidthPx = Math.round(outputWidthMM * mmToPx);
+    const outputHeightPx = Math.round(outputHeightMM * mmToPx);
+    const squareSizePx = Math.round(squareSizeMM * mmToPx);
+    const squareSpacingPx = Math.round(squareSpacingMM * mmToPx);
+    const topDistancePx = Math.round(topDistanceMM * mmToPx);
+    const cornerRadiusPx = Math.round(cornerRadiusMM * mmToPx);
 
     // Create the full-size canvas for downloading
     fullCanvas = document.createElement('canvas');
@@ -55,21 +103,26 @@ function processImage(img) {
     fullCanvas.height = outputHeightPx;
 
     // Draw the image scaled to fit the specified size on the full canvas
+    fullCtx.save();
+    fullCtx.beginPath();
+
+    // Draw rounded corners on the right side
+    fullCtx.moveTo(0, 0); // Start at the top-left
+    fullCtx.lineTo(outputWidthPx - cornerRadiusPx, 0); // Line to the top-right minus radius
+    fullCtx.quadraticCurveTo(outputWidthPx, 0, outputWidthPx, cornerRadiusPx); // Top-right rounded corner
+    fullCtx.lineTo(outputWidthPx, outputHeightPx - cornerRadiusPx); // Right side down to bottom-right minus radius
+    fullCtx.quadraticCurveTo(outputWidthPx, outputHeightPx, outputWidthPx - cornerRadiusPx, outputHeightPx); // Bottom-right rounded corner
+    fullCtx.lineTo(0, outputHeightPx); // Bottom line
+    fullCtx.closePath();
+    fullCtx.clip();
+
     fullCtx.drawImage(img, 0, 0, outputWidthPx, outputHeightPx);
+    fullCtx.restore();
 
     // Add the transparent squares to the full canvas
-    const squareSizeMM = 4.86;
-    const squareSizePx = Math.round(squareSizeMM * mmToInch * dpi);
-    const squareOffsetXMM = 3.22;
-    const squareOffsetXPx = Math.round(squareOffsetXMM * mmToInch * dpi);
-    const squareStartYMM = 8.46;
-    const squareStartYPx = Math.round(squareStartYMM * mmToInch * dpi);
-    const squareSpacingMM = 3.72;
-    const squareSpacingPx = Math.round(squareSpacingMM * mmToInch * dpi);
-
-    for (let i = 0; i < 21; i++) {
-        const yPos = squareStartYPx + i * (squareSizePx + squareSpacingPx);
-        fullCtx.clearRect(squareOffsetXPx, yPos, squareSizePx, squareSizePx);
+    for (let i = 0; i < numSquares; i++) {
+        const yPos = topDistancePx + i * (squareSizePx + squareSpacingPx);
+        fullCtx.clearRect(3.22 * mmToPx, yPos, squareSizePx, squareSizePx);
     }
 
     // Display the preview on a separate canvas
@@ -95,3 +148,6 @@ function downloadImage() {
 
     link.click();
 }
+
+// Load the default "Medium" preset on page load
+loadPreset();
